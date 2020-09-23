@@ -2,6 +2,8 @@ package com.example.pomotime;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
@@ -10,8 +12,9 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
     private TextView countdownText;
+    private TextView countdownBreakText;
     private Button countdownButton;
-
+    private Button countdownButtonStop;
     private CountDownTimer countDownTimer;
     private long timeLeftInMilliseconds = 1500000;
     private boolean timerRunning;
@@ -22,7 +25,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         countdownText = findViewById(R.id.countdown_text);
+        countdownBreakText = findViewById(R.id.countdown_break_text);
         countdownButton = findViewById(R.id.countdown_button);
+        countdownButtonStop = findViewById(R.id.countdown_button_stop);
 
         countdownButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -31,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     public void startStop(){
         if(timerRunning){
             stopTimer();
@@ -39,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
             startTimer();
         }
     }
+
     public void startTimer(){
         countDownTimer = new CountDownTimer(timeLeftInMilliseconds, 1000) {
             @Override
@@ -53,12 +60,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
         countdownButton.setText(("PAUSE"));
+        countdownButtonStop.setText("STOP");
         timerRunning = true;
     }
 
     public void stopTimer(){
         countDownTimer.cancel();
         countdownButton.setText("START");
+        countdownButtonStop.setText("DONE");
         timerRunning = false;
     }
 
