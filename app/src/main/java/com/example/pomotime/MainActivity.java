@@ -16,6 +16,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView countdownBreakText;
     private Button countdownButton;
     private Button countdownButtonStop;
+    private Button secondActivityButton;
     private CountDownTimer countDownTimer;
     private CountDownTimer countDownTimerBreak;
     private long timeLeftInMillisecondsWork = 1500000;
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean WorkTimerRunning;
     private boolean BreakTimerRunning;
     private boolean WorkOrBreak = true;
+    private Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         countdownBreakText = findViewById(R.id.countdown_break_text);
         countdownButton = findViewById(R.id.countdown_button);
         countdownButtonStop = findViewById(R.id.countdown_button_stop);
-
+        secondActivityButton = findViewById(R.id.secondActivityButton);
         countdownButtonStop.setEnabled(false);
         countdownButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -48,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
                 stopDone();
             }
         });
+        secondActivityButton.setOnClickListener(starTodoList);
+        secondActivityButton.setOnLongClickListener(startTodoListLong);
     }
 
     //Functions for start and resume button
@@ -201,4 +205,25 @@ public class MainActivity extends AppCompatActivity {
 
         countdownBreakText.setText((timeLeft));
     }
+
+    public void runTodoList(boolean flag){
+        Intent intent = new Intent(context, TodoList.class);
+        intent.putExtra("flag", flag);
+        context.startActivity(intent);
+    }
+
+    View.OnClickListener starTodoList = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            runTodoList(true);
+        }
+    };
+
+    View.OnLongClickListener startTodoListLong = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            runTodoList(false);
+            return true;
+        }
+    };
 }
