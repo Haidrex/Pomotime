@@ -7,11 +7,22 @@
     tools:context=".MainActivity">
 
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        />
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
         android:layout_marginTop="200sp">
 
         <TextView
@@ -36,37 +47,54 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="400sp">
 
         <Button
             android:id="@+id/countdown_button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="0.5"
             android:ellipsize="end"
             android:text="start" />
 
         <Button
             android:id="@+id/countdown_button_stop"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
             android:layout_height="wrap_content"
+            android:layout_weight="0.5"
             android:layout_gravity="end"
             android:text="stop" />
     </LinearLayout>
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="500sp">
     <Button
         android:id="@+id/secondActivityButton"
-        android:layout_width="100dp"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="155dp"
-        android:layout_marginTop="46dp"
-        android:layout_marginEnd="155dp"
-        android:layout_marginBottom="191dp"
-        android:text="To Do List" />
+        android:layout_marginRight="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_weight="0.5"
+        android:ellipsize="end"
+        android:text="To Do List"  />
+        <Button
+            android:id="@+id/addListItem"
+            android:layout_width="0dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_gravity="end"
+            android:text="Add To Do"/>
+    </LinearLayout>
+
 </RelativeLayout>

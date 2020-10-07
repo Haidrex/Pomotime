@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    <EditText
+        android:id="@+id/editWork"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/my_toolbar"
+        android:hint="Change work time"
+        android:textSize="15dp"/>
+
+    <Button
+        android:id="@+id/buttonWork"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Change"
+        app:layout_constraintStart_toEndOf="@+id/editWork"
+        app:layout_constraintTop_toBottomOf="@+id/my_toolbar" />
+
+    <EditText
+        android:id="@+id/editBreak"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editWork"
+        android:hint="Change Break time"
+        android:textSize="15dp"/>
+
+    <Button
+        android:id="@+id/buttonBreak"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Change"
+        app:layout_constraintStart_toEndOf="@+id/editBreak"
+        app:layout_constraintTop_toBottomOf="@+id/buttonWork"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

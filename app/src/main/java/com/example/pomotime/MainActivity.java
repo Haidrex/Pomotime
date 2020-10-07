@@ -1,22 +1,30 @@
 package com.example.pomotime;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends AppCompatActivity {
-
+public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener{
+    private ActionBar myToolBar;
     private TextView countdownText;
     private TextView countdownBreakText;
     private Button countdownButton;
     private Button countdownButtonStop;
     private Button secondActivityButton;
+    private Button addTodo;
     private CountDownTimer countDownTimer;
     private CountDownTimer countDownTimerBreak;
     private long timeLeftInMillisecondsWork = 1500000;
@@ -25,18 +33,23 @@ public class MainActivity extends AppCompatActivity {
     private boolean BreakTimerRunning;
     private boolean WorkOrBreak = true;
     private Context context = this;
+    private int breakCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar myToolBar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolBar);
         countdownText = findViewById(R.id.countdown_text);
         countdownBreakText = findViewById(R.id.countdown_break_text);
         countdownButton = findViewById(R.id.countdown_button);
         countdownButtonStop = findViewById(R.id.countdown_button_stop);
         secondActivityButton = findViewById(R.id.secondActivityButton);
+        addTodo = findViewById(R.id.addListItem);
         countdownButtonStop.setEnabled(false);
+
         countdownButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
@@ -50,8 +63,28 @@ public class MainActivity extends AppCompatActivity {
                 stopDone();
             }
         });
+
+        addTodo.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                openDialog();
+            }
+        });
         secondActivityButton.setOnClickListener(starTodoList);
         secondActivityButton.setOnLongClickListener(startTodoListLong);
+    };
+
+    public void openDialog(){
+        TodoDialog tododialog = new TodoDialog();
+        tododialog.show(getSupportFragmentManager(),"example dialog");
+    }
+
+    @Override
+    public void applyText(String title, String category) {
+        Intent intent = new Intent(getBaseContext(), TodoList.class);
+        intent.putExtra("title", title);
+        intent.putExtra("category", category);
+        startActivity(intent);
     }
 
     //Functions for start and resume button
@@ -112,6 +145,11 @@ public class MainActivity extends AppCompatActivity {
 
     //function that starts the break timer
     public void startBreakTimer(){
+        breakCount++;
+        if(breakCount == 4){
+            timeLeftInMillisecondsBreak = 300000;
+            breakCount = 0;
+        }
         countDownTimerBreak = new CountDownTimer(timeLeftInMillisecondsBreak, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -128,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
         countdownButtonStop.setText("SKIP");
         BreakTimerRunning = true;
         WorkOrBreak = false;
+        breakCount++;
     }
 
     //pauses work timer
@@ -138,16 +177,16 @@ public class MainActivity extends AppCompatActivity {
         WorkTimerRunning = false;
     }
 
-    //stops the work timer, makes it go back to 25:00 minutes
-    public void stopWorkTimer(){
-        countDownTimer.cancel();
-        countdownText.setText("25:00");
-        timeLeftInMillisecondsWork = 1500000;
-        countdownButton.setText("START");
-        countdownButtonStop.setText("DONE");
-        countdownButtonStop.setEnabled(false);
-        WorkTimerRunning = false;
-    }
+        //stops the work timer, makes it go back to 25:00 minutes
+        public void stopWorkTimer(){
+            countDownTimer.cancel();
+            countdownText.setText("25:00");
+            timeLeftInMillisecondsWork = 1500000;
+            countdownButton.setText("START");
+            countdownButtonStop.setText("DONE");
+            countdownButtonStop.setEnabled(false);
+            WorkTimerRunning = false;
+        }
 
     //finishes work timer and starts the break timer
     public void finishWorkTimer(){
@@ -226,4 +265,25 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
     };
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.toolbar_menu,menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch (item.getItemId()){
+            case R.id.action_settings:
+                Intent intent = new Intent(context, Settings.class);
+                intent.putExtra("flag", true);
+                context.startActivity(intent);
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 }
