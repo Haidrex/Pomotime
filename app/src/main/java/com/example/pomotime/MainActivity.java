@@ -1,23 +1,44 @@
 package com.example.pomotime;
 
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.preference.PreferenceManager;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener{
+import java.util.concurrent.TimeUnit;
+
+public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener {
+    private long timeWork = 1500000;
+    private long timeBreak = 300000;
+    private String c_text="";
+    private long timeLeftInMillisecondsWork = timeWork;
+    private long timeLeftInMillisecondsBreak = timeBreak;
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key){
+        setTimer();
+    }
+
     private ActionBar myToolBar;
     private TextView countdownText;
     private TextView countdownBreakText;
@@ -27,13 +48,12 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     private Button addTodo;
     private CountDownTimer countDownTimer;
     private CountDownTimer countDownTimerBreak;
-    private long timeLeftInMillisecondsWork = 1500000;
-    private long timeLeftInMillisecondsBreak = 300000;
     private boolean WorkTimerRunning;
     private boolean BreakTimerRunning;
     private boolean WorkOrBreak = true;
     private Context context = this;
     private int breakCount = 0;
+    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,9 +90,18 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 openDialog();
             }
         });
+
         secondActivityButton.setOnClickListener(starTodoList);
         secondActivityButton.setOnLongClickListener(startTodoListLong);
+        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        setTimer();
     };
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        setTimer();
+    }
 
     public void openDialog(){
         TodoDialog tododialog = new TodoDialog();
@@ -145,7 +174,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
 
     //function that starts the break timer
     public void startBreakTimer(){
-        breakCount++;
         if(breakCount == 4){
             timeLeftInMillisecondsBreak = 300000;
             breakCount = 0;
@@ -166,7 +194,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setText("SKIP");
         BreakTimerRunning = true;
         WorkOrBreak = false;
-        breakCount++;
     }
 
     //pauses work timer
@@ -180,22 +207,24 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         //stops the work timer, makes it go back to 25:00 minutes
         public void stopWorkTimer(){
             countDownTimer.cancel();
-            countdownText.setText("25:00");
-            timeLeftInMillisecondsWork = 1500000;
+            countdownText.setText(formatTime(timeWork));
+            timeLeftInMillisecondsWork = timeWork;
             countdownButton.setText("START");
             countdownButtonStop.setText("DONE");
             countdownButtonStop.setEnabled(false);
             WorkTimerRunning = false;
+
         }
 
     //finishes work timer and starts the break timer
     public void finishWorkTimer(){
         countDownTimer.cancel();
-        countdownText.setText("25:00");
-        timeLeftInMillisecondsWork = 1500000;
+        countdownText.setText(formatTime(timeWork));
+        timeLeftInMillisecondsWork = timeWork;
         countdownButton.setText("PAUSE");
         countdownButtonStop.setText("SKIP");
         startBreakTimer();
+        breakCount++;
     }
 
     //pauses the break timer
@@ -208,8 +237,8 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     //skips the break
     public void skipBreakTimer(){
         countDownTimerBreak.cancel();
-        countdownBreakText.setText("05:00");
-        timeLeftInMillisecondsBreak = 300000;
+        countdownBreakText.setText(formatTime(timeBreak));
+        timeLeftInMillisecondsBreak = timeBreak;
         countdownButton.setText("START");
         countdownButtonStop.setText("DONE");
         countdownButtonStop.setEnabled(false);
@@ -280,10 +309,60 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 intent.putExtra("flag", true);
                 context.startActivity(intent);
                 return true;
+            case R.id.add_category:
+                addCategoryDialog();
 
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void setTimer() {
+        Long work = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
+        timeWork = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
+        timeLeftInMillisecondsWork = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
+        timeBreak = Long.valueOf(Integer.parseInt(preferences.getString("break_duration","1")) * 60000);
+        timeLeftInMillisecondsBreak = Long.valueOf(Integer.parseInt(preferences.getString("break_duration","1")) * 60000);
+        countdownText.setText(formatTime(work));
+        countdownBreakText.setText(formatTime(timeBreak));
+    }
+
+    private String formatTime(long time){
+        String timeText = String.format("%01d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(time),
+                TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds((TimeUnit.MILLISECONDS.toMinutes(time))));
+        return timeText;
+    }
+
+    private void addCategoryDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add Category");
+
+        final EditText input = new EditText(this);
+
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Category category;
+                c_text = input.getText().toString();
+                DBHelper dataBaseHelper = new DBHelper(MainActivity.this);
+                category = new Category(-1, c_text);
+                boolean b = dataBaseHelper.addOne(category);
+                Toast.makeText(MainActivity.this, "Success= " + b, Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
     }
 
 }

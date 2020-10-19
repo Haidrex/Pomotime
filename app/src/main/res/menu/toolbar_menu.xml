@@ -5,4 +5,9 @@
         android:title="Settings"
         android:id="@+id/action_settings"
         app:showAsAction="never"/>
+    <item
+        android:title="Add Category"
+        android:id="@+id/add_category"
+        app:showAsAction="never"
+        />
 </menu>
