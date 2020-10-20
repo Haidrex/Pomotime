@@ -1,5 +1,6 @@
 package com.example.pomotime;
 
+import android.app.LauncherActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,11 +27,6 @@ import java.util.List;
 public class TodoList extends AppCompatActivity {
     private Context context = this;
     private ListView myTodoList;
-    private Button addItemButton;
-    private EditText addItemText;
-    private ListAdapter adapter;
-    //private ArrayList<String> listItems;
-    //private ArrayAdapter<String> itemsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -41,27 +37,26 @@ public class TodoList extends AppCompatActivity {
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
         myTodoList = (ListView) findViewById(R.id.todoview);
-        final List<ListItem> items = new ArrayList<ListItem>();
-        Intent intent = getIntent();
-        items.add(new ListItem(intent.getStringExtra("title"),intent.getStringExtra("category") ));
-        adapter = new ListAdapter(this, items);
-        myTodoList.setAdapter(adapter);
-
         myTodoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> a, View v, int position, long id) {
+            public void onItemClick(AdapterView<?> a, View v, final int position, long id) {
                 AlertDialog.Builder builder =new AlertDialog.Builder(TodoList.this);
                 builder.setTitle("Delete?");
                 builder.setMessage("Are you sure you want to delete " + (position + 1));
+                final AdapterView<?> parent = a;
                 final int positionToRemove = position;
                 builder.setNegativeButton("Cancel", null);
                 builder.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        items.remove(positionToRemove);
-                        adapter.notifyDataSetChanged();
+                        ListItem clickedItem = (ListItem) parent.getItemAtPosition(positionToRemove);
+                        DBHelper dbHelper = new DBHelper(TodoList.this);
+                        dbHelper.deleteTodo(clickedItem);
+                        loadData();
                     }});
                 builder.show();
             }
         });
+
+        loadData();
     }
 
     @Override
@@ -82,5 +77,12 @@ public class TodoList extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void loadData(){
+        DBHelper dbHelper = new DBHelper(TodoList.this);
+        List<ListItem> allItems = dbHelper.getAllTodos();
+        ListAdapter adapter = new ListAdapter(this, allItems);
+        myTodoList.setAdapter(adapter);
     }
 }

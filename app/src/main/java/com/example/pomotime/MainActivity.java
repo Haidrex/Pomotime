@@ -318,12 +318,11 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     }
 
     private void setTimer() {
-        Long work = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
         timeWork = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
         timeLeftInMillisecondsWork = Long.valueOf(Integer.parseInt(preferences.getString("work_duration", "1")) * 60000);
         timeBreak = Long.valueOf(Integer.parseInt(preferences.getString("break_duration","1")) * 60000);
         timeLeftInMillisecondsBreak = Long.valueOf(Integer.parseInt(preferences.getString("break_duration","1")) * 60000);
-        countdownText.setText(formatTime(work));
+        countdownText.setText(formatTime(timeWork));
         countdownBreakText.setText(formatTime(timeBreak));
     }
 
@@ -351,8 +350,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 c_text = input.getText().toString();
                 DBHelper dataBaseHelper = new DBHelper(MainActivity.this);
                 category = new Category(-1, c_text);
-                boolean b = dataBaseHelper.addOne(category);
-                Toast.makeText(MainActivity.this, "Success= " + b, Toast.LENGTH_SHORT).show();
+                dataBaseHelper.insertCategory(category);
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
