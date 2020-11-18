@@ -10,29 +10,31 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Filter;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TodoDialog extends AppCompatDialogFragment {
-    private EditText editTodo;
-    private TodoDialogListener listener;
+public class FilterDialog extends AppCompatDialogFragment {
+    private FilterDialog.FilterDialogListener listener;
     private Spinner chooseCategory;
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater  = getActivity().getLayoutInflater();
-        View view = inflater.inflate(R.layout.tododialog, null);
+        View view = inflater.inflate(R.layout.filter_dialog, null);
 
         builder.setView(view)
-                .setTitle("Add To Do")
+                .setTitle("Choose category")
                 .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -44,17 +46,10 @@ public class TodoDialog extends AppCompatDialogFragment {
                     public void onClick(DialogInterface dialog, int which) {
                         //listener.applyText(title, category);
 
-                        ListItem todo;
-
-                        String title = editTodo.getText().toString();;
-                        String category = chooseCategory.getSelectedItem().toString();
-                        listener.applyText(title);
-                        DBHelper dataBaseHelper = new DBHelper(getActivity());
-                        todo = new ListItem(-1, title, category);
-                        dataBaseHelper.insertTodo(todo);
+                        String c_text = chooseCategory.getSelectedItem().toString();
+                        listener.applyFilter(c_text);
                     }
                 });
-        editTodo = view.findViewById(R.id.editTitle);
         chooseCategory = (Spinner) view.findViewById(R.id.categoriesSpinner);
 
         loadSpinnerData();
@@ -67,15 +62,15 @@ public class TodoDialog extends AppCompatDialogFragment {
         super.onAttach(context);
 
         try {
-            listener = (TodoDialogListener) context;
+            listener = (FilterDialogListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString() + "must implement TodoDialogListener");
+            throw new ClassCastException(context.toString() + "must implement FilterDialogListener");
         }
 
     }
 
-    public interface TodoDialogListener{
-        void applyText(String title);
+    public interface FilterDialogListener{
+        void applyFilter(String category);
     }
 
     public void loadSpinnerData(){
@@ -88,4 +83,6 @@ public class TodoDialog extends AppCompatDialogFragment {
 
         chooseCategory.setAdapter(dataAdapter);
     }
+
+
 }
