@@ -5,6 +5,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlarmManager;
+import android.app.ListActivity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -21,8 +22,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +36,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener, RequestOperator.RequestOperatorListener{
@@ -47,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         setTimer();
     }
 
-    private ActionBar myToolBar;
     private TextView workingOnWhat;
     private TextView countdownText;
     private TextView countdownBreakText;
@@ -64,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     private int breakCount = 0;
     private SharedPreferences preferences;
     private ProgressBar progressBar;
-    private Button sendRequestButton;
     private TextView done;
     private TextView gaveup;
     private ModelPost publication;
@@ -74,34 +76,41 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     private Button sendCountRequest;
     private ArrayList<ModelPost> models;
     private IndicatingView indicator;
+    private Button giveupButton;
+    private Button doneButton;
+    private ListView progressBarList;
+    private ArrayAdapter<ProgressItem> adapters;
+    private ArrayList<ProgressItem> progressList = new ArrayList<>();
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static final String WORKING = "working";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        progressBarList = (ListView) findViewById(R.id.progressList);
         drawer = findViewById(R.id.drawer_layout);
         workingOnWhat = findViewById(R.id.workingOnWhat);
+        giveupButton = (Button) findViewById(R.id.gaveUpButton);
+        doneButton = (Button) findViewById(R.id.doneButton);
+        doneButton.setOnClickListener(finishTask);
+        giveupButton.setOnClickListener(giveupOnTask);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View headerView = navigationView.getHeaderView(0);
+        done = (TextView) headerView.findViewById(R.id.tasks_done);
+        gaveup = (TextView) headerView.findViewById(R.id.task_gaveup);
+        done.setOnLongClickListener(resetScores);
+
+        initiateScores();
 
         createNotificationChannel();
-        Intent intent = getIntent();
-        Bundle extras = intent.getExtras();
-        DBHelper dataBaseHelper = new DBHelper(this);
-        if(extras != null){
-            String data = intent.getExtras().getString("workOn");
-            CurrentlyWorkingTodo todo = new CurrentlyWorkingTodo(1, data);
-            dataBaseHelper.deleteCurrentlyWorking();
-            dataBaseHelper.insertCurrentlyWorking(todo);
-            workingOnWhat.setText(todo.toString());
-        }
-        else if(dataBaseHelper.isCurrentlyWorking() == false) {
-            String workingOnTodo = dataBaseHelper.getCurrentlyWorking();
-            workingOnWhat.setText("Working on: " + workingOnTodo);
-        }
-        else{
-            workingOnWhat.setText("");
-        }
+
+        workingOnSetup();
+
         Toolbar myToolBar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolBar);
+
         countdownText = findViewById(R.id.countdown_text);
         countdownBreakText = findViewById(R.id.countdown_break_text);
         countdownButton = findViewById(R.id.countdown_button);
@@ -112,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         progressBar = findViewById(R.id.progressbar);
         int i = 0;
         progressBar.setProgress(i);
+
         countdownButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -137,14 +147,14 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         secondActivityButton.setOnLongClickListener(startTodoListLong);
         preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        View headerView = navigationView.getHeaderView(0);
-        sendRequestButton = (Button) headerView.findViewById(R.id.send_request);
+
+        Button sendRequestButton = (Button) headerView.findViewById(R.id.send_request);
         sendRequestButton.setOnClickListener(requestButtonClicked);
-        done = (TextView) headerView.findViewById(R.id.tasks_done);
-        gaveup = (TextView) headerView.findViewById(R.id.task_gaveup);
         itemsCount = (TextView) headerView.findViewById(R.id.items_count);
         indicator = (IndicatingView) headerView.findViewById(R.id.generated_graphic);
+        progressBar.setOnClickListener(saveProgress);
+        adapters = new ArrayAdapter<>(this, R.layout.progresslistitem, progressList);
+
         setTimer();
     }
 
@@ -213,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 timeLeftInMillisecondsWork = l;
                 updateWorkTimer();
                 i++;
-                progressBar.setProgress((int)i*100/(60000/1000));
+                progressBar.setProgress(i*100/(60000/1000));
             }
 
             @Override
@@ -222,6 +232,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 progressBar.setProgress(100);
                 Toast toast = Toast.makeText(getApplicationContext(), "Finished", Toast.LENGTH_SHORT);
                 toast.show();
+                progressBar.setProgress(0);
                 Intent intent = new Intent(MainActivity.this, TimerFinishedReminder.class);
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -268,6 +279,8 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButton.setText("RESUME");
         countdownButtonStop.setText("DONE");
         WorkTimerRunning = false;
+        saveProgress();
+
     }
 
     //stops the work timer, makes it go back to 25:00 minutes
@@ -279,6 +292,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setText("DONE");
         countdownButtonStop.setEnabled(false);
         WorkTimerRunning = false;
+        progressBar.setProgress(0);
 
     }
 
@@ -289,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         timeLeftInMillisecondsWork = timeWork;
         countdownButton.setText("PAUSE");
         countdownButtonStop.setText("SKIP");
+        progressBar.setProgress(0);
         startBreakTimer();
         breakCount++;
     }
@@ -309,6 +324,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setText("DONE");
         countdownButtonStop.setEnabled(false);
         WorkOrBreak = true;
+        progressBar.setProgress(0);
     }
 
     //updates the work timer textview every second
@@ -391,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         timeLeftInMillisecondsBreak = Long.valueOf(Integer.parseInt(preferences.getString("break_duration", "1")) * 60000);
         countdownText.setText(formatTime(timeWork));
         countdownBreakText.setText(formatTime(timeBreak));
-        progressBar.setMax((Integer.parseInt(preferences.getString("work_duration", "1"))) % 60000 / 1000);
+        progressBar.setMax((Integer.parseInt(preferences.getString("work_duration", "1"))) * 100);
     }
 
     private String formatTime(long time) {
@@ -520,5 +536,95 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    public void workingOnSetup(){
+        SharedPreferences preferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        String workingOn = preferences.getString(WORKING, null);
+        Toast toast = Toast.makeText(getApplicationContext(), "Finished", Toast.LENGTH_SHORT);
+        toast.show();
+        if(workingOn != null){
+            workingOnWhat.setText("Working on: " + workingOn);
+            giveupButton.setVisibility(View.VISIBLE);
+            doneButton.setVisibility(View.VISIBLE);
+
+        }
+        else{
+            workingOnWhat.setText("");
+            giveupButton.setVisibility(View.INVISIBLE);
+            doneButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    View.OnClickListener finishTask = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(WORKING, null);
+            editor.apply();
+            DBHelper dataBaseHelper = new DBHelper(getApplicationContext());
+            dataBaseHelper.addDoneTask();
+            Score score = dataBaseHelper.getScores();
+            done.setText("Done: " + score.getDone());
+            doneButton.setVisibility(View.INVISIBLE);
+            giveupButton.setVisibility(View.INVISIBLE);
+            workingOnWhat.setText("");
+        }
+    };
+
+    View.OnClickListener giveupOnTask = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            DBHelper dataBaseHelper = new DBHelper(getApplicationContext());
+            dataBaseHelper.addGiveupTask();
+            Score score = dataBaseHelper.getScores();
+            doneButton.setVisibility(View.INVISIBLE);
+            giveupButton.setVisibility(View.INVISIBLE);
+            workingOnWhat.setText("");
+            gaveup.setText("Gave Up: " + score.getGiveup());
+
+            SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(WORKING, null);
+            editor.apply();
+        }
+    };
+
+    public void initiateScores(){
+        DBHelper dataBaseHelper = new DBHelper(getApplicationContext());
+        dataBaseHelper.initiateScores();
+        Score score = dataBaseHelper.getScores();
+        done.setText("Done: " + score.getDone());
+        gaveup.setText("Gave Up: " + score.getGiveup());
+    }
+
+    View.OnLongClickListener resetScores = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            DBHelper dataBaseHelper = new DBHelper(getApplicationContext());
+            dataBaseHelper.resetScores();
+            Score score = dataBaseHelper.getScores();
+            done.setText("Done: " + score.getDone());
+            gaveup.setText("Gave Up: " + score.getGiveup());
+            return false;
+        }
+    };
+
+    View.OnClickListener saveProgress = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+        }
+    };
+
+    public void saveProgress(){
+        int progress = progressBar.getProgress();
+        ProgressItem item = new ProgressItem(progress,-1);
+        progressList.add(item);
+        adapters = new ProgressListAdapter(this, progressList);
+        progressBarList.setAdapter(adapters);
+        adapters.notifyDataSetChanged();
+
     }
 }

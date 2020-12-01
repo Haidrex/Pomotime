@@ -63,14 +63,6 @@ public class IndicatingView extends View {
                 canvas.drawLine(0,height,width/2,0,paint);
                 canvas.drawLine(width/2,0,width,height,paint);
                 canvas.drawLine(height, width,0,height,paint);
-                for(int i = 0; i < 10000; i++){
-                    canvas.save();
-                    canvas.rotate(degrees);
-                    canvas.drawLine(0,height,width/2,0,paint);
-                    canvas.drawLine(width/2,0,width,height,paint);
-                    canvas.drawLine(height, width,0,height,paint);
-                    canvas.restore();
-                }
             default:
                 break;
         }

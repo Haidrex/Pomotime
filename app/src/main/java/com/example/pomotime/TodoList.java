@@ -4,6 +4,7 @@ import android.app.LauncherActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.ContextMenu;
@@ -34,7 +35,8 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
     private ListView myTodoList;
     private Button filterButton;
     private Spinner chooseCategory;
-
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static final String WORKING = "working";
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -114,8 +116,11 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
             case R.id.work:
                 ListItem selectedItem = (ListItem) myTodoList.getItemAtPosition(info.position);
                 String workOn = (String) selectedItem.getTitle();
+                SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(WORKING, workOn);
+                editor.apply();
                 Intent intent = new Intent(TodoList.this, MainActivity.class);
-                intent.putExtra("workOn", workOn);
                 startActivity(intent);
         }
         return true;

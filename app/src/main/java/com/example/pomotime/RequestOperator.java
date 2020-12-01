@@ -75,7 +75,7 @@ public class RequestOperator extends Thread {
 //    }
 
     private int request() throws IOException, JSONException{
-        URL object = new URL("https://my-json-server.typicode.com/Haidrex/main/tasks");
+        URL object = new URL("https://jsonplaceholder.typicode.com/posts");
         HttpsURLConnection connection = (HttpsURLConnection) object.openConnection();
 
         connection.setRequestMethod("GET");

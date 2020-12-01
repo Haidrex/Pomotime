@@ -9,10 +9,10 @@
         android:right="1dp"
         android:top="1dp"
         android:bottom="1dp" />
-    <solid android:color="#80ab4c"/>
+    <solid android:color="#e81313"/>
     <gradient
-        android:startColor="#28bd3c"
-        android:centerColor="#49eb5e"
-        android:endColor="#80f28f"
+        android:startColor="#d41515"
+        android:centerColor="#eb2f2f"
+        android:endColor="#e85858"
         android:angle="270" />
 </shape>

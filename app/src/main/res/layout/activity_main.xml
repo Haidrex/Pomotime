@@ -26,25 +26,48 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginLeft="20dp"
+        android:layout_marginTop="100sp"
         android:layout_marginRight="20dp"
-        android:layout_marginTop="100sp">
+        android:orientation="horizontal">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            />
         <TextView
             android:id="@+id/workingOnWhat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="text"
             android:layout_centerInParent="true"
-            android:visibility="visible"
+            android:inputType="text"
             android:textSize="20sp"
-            />
+            android:visibility="visible" />
+
     </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="140sp"
+        android:layout_marginRight="20dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/gaveUpButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:text="Give Up"
+            android:visibility="invisible" />
+
+
+        <Button
+            android:id="@+id/doneButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="DONE"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -85,7 +108,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:max="100"
-            android:progress="0" />
+            android:progress="0"
+            android:clickable="true"
+            />
     </LinearLayout>
 
     <LinearLayout
@@ -102,7 +127,8 @@
             android:layout_marginLeft="5dp"
             android:layout_weight="0.5"
             android:ellipsize="end"
-            android:text="start" />
+            android:text="start"
+            android:background="@drawable/button2"/>
 
         <Button
             android:id="@+id/countdown_button_stop"
@@ -112,13 +138,15 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:layout_gravity="end"
-            android:text="stop" />
+            android:text="stop"
+            android:background="@drawable/button3"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="500sp">
+        android:layout_marginTop="500sp"
+        android:id="@+id/addButtons">
     <Button
         android:id="@+id/secondActivityButton"
         android:layout_width="0dp"
@@ -138,6 +166,20 @@
             android:layout_gravity="end"
             android:text="Add To Do"/>
     </LinearLayout>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/addButtons">
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_below="@+id/addButtons"
+        android:layout_alignParentBottom="true"
+        android:divider="@android:color/background_dark"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="1dp"
+        android:id="@+id/progressList"/>
+</LinearLayout>
 </RelativeLayout>
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
