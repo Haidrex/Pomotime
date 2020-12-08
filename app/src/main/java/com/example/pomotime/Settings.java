@@ -18,7 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 public class Settings extends PreferenceActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.menu.preferences);
     }

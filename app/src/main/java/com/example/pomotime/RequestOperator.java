@@ -19,9 +19,10 @@ import java.util.ArrayList;
 import javax.net.ssl.HttpsURLConnection;
 
 public class RequestOperator extends Thread {
-    public interface RequestOperatorListener{
-        void success (int count);
-        void failed (int responseCode);
+    public interface RequestOperatorListener {
+        void success(int count);
+
+        void failed(int responseCode);
     }
 
 //    public interface CountRequestOperatorListener{
@@ -33,24 +34,25 @@ public class RequestOperator extends Thread {
     //private CountRequestOperatorListener countListener;
     private int responseCode;
 
-    public void setListener (RequestOperatorListener listener) {this.listener = listener;}
+    public void setListener(RequestOperatorListener listener) {
+        this.listener = listener;
+    }
     //public void setCountListener (CountRequestOperatorListener listener){this.countListener = listener;}
 
     @Override
-    public void run(){
+    public void run() {
         super.run();
-        try{
+        try {
 
             int count = request();
-            if(count != -1){
+            if (count != -1) {
                 success(count);
-            }
-            else{
+            } else {
                 failed(responseCode);
             }
-        }catch (IOException e){
+        } catch (IOException e) {
             failed(-1);
-        }catch (JSONException e){
+        } catch (JSONException e) {
             failed(-2);
         }
     }
@@ -74,7 +76,7 @@ public class RequestOperator extends Thread {
 //        }
 //    }
 
-    private int request() throws IOException, JSONException{
+    private int request() throws IOException, JSONException {
         URL object = new URL("https://jsonplaceholder.typicode.com/posts");
         HttpsURLConnection connection = (HttpsURLConnection) object.openConnection();
 
@@ -85,9 +87,9 @@ public class RequestOperator extends Thread {
         Log.i("Response Code", String.valueOf((responseCode)));
         InputStreamReader inputStreamReader;
 
-        if(responseCode == 200){
+        if (responseCode == 200) {
             inputStreamReader = new InputStreamReader(connection.getInputStream());
-        }else{
+        } else {
             inputStreamReader = new InputStreamReader((connection.getErrorStream()));
         }
 
@@ -95,16 +97,16 @@ public class RequestOperator extends Thread {
         String inputLine;
         StringBuffer responseStringBuffer = new StringBuffer();
 
-        while((inputLine = bufferedReader.readLine()) != null){
+        while ((inputLine = bufferedReader.readLine()) != null) {
             responseStringBuffer.append(inputLine);
         }
         bufferedReader.close();
         Log.i("Response Result", responseStringBuffer.toString());
         JSONArray array = new JSONArray(responseStringBuffer.toString());
         int count = array.length();
-        if(array != null){
+        if (array != null) {
             return count;
-        }else{
+        } else {
             return -1;
         }
     }
@@ -155,20 +157,20 @@ public class RequestOperator extends Thread {
 //        }
 //    }
 
-    public int getAllCount(String response) throws JSONException{
+    public int getAllCount(String response) throws JSONException {
         JSONArray array = new JSONArray(response);
         int count = array.length();
         return count;
     }
 
-    private void failed(int code){
-        if(listener != null){
+    private void failed(int code) {
+        if (listener != null) {
             listener.failed(code);
         }
     }
 
-    private void success(int count){
-        if(listener != null){
+    private void success(int count) {
+        if (listener != null) {
             listener.success(count);
         }
     }

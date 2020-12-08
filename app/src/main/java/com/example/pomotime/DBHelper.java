@@ -53,22 +53,21 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(createTableStatement);
     }
 
-    public boolean insertCategory(Category category){
+    public boolean insertCategory(Category category) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_CATEGORY_NAME, category.getName());
 
         long insert = db.insert(CATEGORY_TABLE, null, cv);
-        if(insert == -1){
+        if (insert == -1) {
             return false;
-        }
-        else {
+        } else {
 
             return true;
         }
     }
 
-    public List<String> getAllCategories(){
+    public List<String> getAllCategories() {
         List<String> categories = new ArrayList<String>();
 
         String selectQuery = "SELECT * FROM " + CATEGORY_TABLE;
@@ -76,10 +75,10 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
-        if(cursor.moveToFirst()){
-            do{
+        if (cursor.moveToFirst()) {
+            do {
                 categories.add(cursor.getString(1));
-            } while(cursor.moveToNext());
+            } while (cursor.moveToNext());
         }
 
         cursor.close();
@@ -88,23 +87,22 @@ public class DBHelper extends SQLiteOpenHelper {
         return categories;
     }
 
-    public boolean insertTodo(ListItem todo){
+    public boolean insertTodo(ListItem todo) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_TODO_TITLE, todo.getTitle());
         cv.put(COLUMN_TODO_CATEGORY, todo.getCategory());
 
         long insert = db.insert(TODO_TABLE, null, cv);
-        if(insert == -1){
+        if (insert == -1) {
             return false;
-        }
-        else {
+        } else {
 
             return true;
         }
     }
 
-    public List<ListItem> getAllTodos(){
+    public List<ListItem> getAllTodos() {
 
         List<ListItem> listitems = new ArrayList<ListItem>();
 
@@ -114,16 +112,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
         Cursor cursor = db.rawQuery(queryString, null);
 
-        if(cursor.moveToFirst()){
-            do{
+        if (cursor.moveToFirst()) {
+            do {
                 int todoId = cursor.getInt(0);
                 String todoTitle = cursor.getString(1);
                 String todoCategory = cursor.getString(2);
                 ListItem newitem = new ListItem(todoId, todoTitle, todoCategory);
                 listitems.add(newitem);
-            }while(cursor.moveToNext());
-        }
-        else{
+            } while (cursor.moveToNext());
+        } else {
 
         }
 
@@ -132,39 +129,37 @@ public class DBHelper extends SQLiteOpenHelper {
         return listitems;
     }
 
-    public boolean deleteTodo(ListItem todoItem){
+    public boolean deleteTodo(ListItem todoItem) {
         SQLiteDatabase db = this.getWritableDatabase();
         String queryString = "DELETE FROM " + TODO_TABLE + " WHERE " + COLUMN_TODO_ID + " = " + todoItem.getId();
         Cursor cursor = db.rawQuery(queryString, null);
 
-        if(cursor.moveToFirst()){
+        if (cursor.moveToFirst()) {
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }
 
-    public List<ListItem> getFilteredTodos(String category){
+    public List<ListItem> getFilteredTodos(String category) {
 
         List<ListItem> listitems = new ArrayList<ListItem>();
 
-        String queryString = "SELECT * FROM " + TODO_TABLE + " WHERE " + COLUMN_TODO_CATEGORY + " = " +" '"+ category + "'";
+        String queryString = "SELECT * FROM " + TODO_TABLE + " WHERE " + COLUMN_TODO_CATEGORY + " = " + " '" + category + "'";
 
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(queryString, null);
 
-        if(cursor.moveToFirst()){
-            do{
+        if (cursor.moveToFirst()) {
+            do {
                 int todoId = cursor.getInt(0);
                 String todoTitle = cursor.getString(1);
                 String todoCategory = cursor.getString(2);
                 ListItem newitem = new ListItem(todoId, todoTitle, todoCategory);
                 listitems.add(newitem);
-            }while(cursor.moveToNext());
-        }
-        else{
+            } while (cursor.moveToNext());
+        } else {
 
         }
 
@@ -173,29 +168,30 @@ public class DBHelper extends SQLiteOpenHelper {
         return listitems;
     }
 
-    public boolean insertCurrentlyWorking(CurrentlyWorkingTodo currentlyWorking){
+    public boolean insertCurrentlyWorking(CurrentlyWorkingTodo currentlyWorking) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(CURRENTLY_WORKING_TODO, currentlyWorking.getTodo());
 
         long insert = db.insert(CURRENTLY_WORKING, null, cv);
-        if(insert == -1){
+        if (insert == -1) {
             return false;
-        }
-        else {
+        } else {
 
             return true;
         }
     }
-    public String getCurrentlyWorking(){
+
+    public String getCurrentlyWorking() {
         String todo = "";
 
-        String selectQuery = "SELECT * FROM " + CURRENTLY_WORKING + " WHERE " + CURRENTLY_WORKING_ID + " = " + 1;;
+        String selectQuery = "SELECT * FROM " + CURRENTLY_WORKING + " WHERE " + CURRENTLY_WORKING_ID + " = " + 1;
+        ;
 
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
-        if(cursor.moveToFirst()){
+        if (cursor.moveToFirst()) {
             todo = cursor.getString(1);
         }
 
@@ -204,30 +200,30 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return todo;
     }
-    public boolean deleteCurrentlyWorking(){
+
+    public boolean deleteCurrentlyWorking() {
 
         String queryString = "DELETE FROM " + CURRENTLY_WORKING + " WHERE " + CURRENTLY_WORKING_ID + " = " + 1;
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(queryString, null);
 
-        if(cursor.moveToFirst()){
+        if (cursor.moveToFirst()) {
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }
 
-    public boolean isCurrentlyWorking(){
+    public boolean isCurrentlyWorking() {
         SQLiteDatabase db = this.getWritableDatabase();
         return DatabaseUtils.queryNumEntries(db, CURRENTLY_WORKING) == 0;
     }
 
-    public void initiateScores(){
+    public void initiateScores() {
         SQLiteDatabase db = this.getWritableDatabase();
-        if(DatabaseUtils.queryNumEntries(db, DONE_GIVEUP_TABLE) == 0){
-            Score score = new Score(1,0,0);
+        if (DatabaseUtils.queryNumEntries(db, DONE_GIVEUP_TABLE) == 0) {
+            Score score = new Score(1, 0, 0);
             ContentValues cv = new ContentValues();
             cv.put(COLUMN_DONE_GIVEUP_ID, score.getId());
             cv.put(COLUMN_DONE_GIVEUP_DONE, score.getDone());
@@ -236,7 +232,8 @@ public class DBHelper extends SQLiteOpenHelper {
             long insert = db.insert(DONE_GIVEUP_TABLE, null, cv);
         }
     }
-    public Score getScores(){
+
+    public Score getScores() {
 
         String queryString = "SELECT * FROM " + DONE_GIVEUP_TABLE;
 
@@ -247,34 +244,37 @@ public class DBHelper extends SQLiteOpenHelper {
         int id = cursor.getInt(0);
         int done = cursor.getInt(1);
         int giveup = cursor.getInt(2);
-        Score scores = new Score(id,done,giveup);
+        Score scores = new Score(id, done, giveup);
 
         cursor.close();
         db.close();
         return scores;
     }
-    public void addDoneTask(){
+
+    public void addDoneTask() {
         Score currentScores = getScores();
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_DONE_GIVEUP_DONE, currentScores.getDone() + 1);
         cv.put(COLUMN_DONE_GIVEUP_GIVEUP, currentScores.getGiveup());
-        db.update(DONE_GIVEUP_TABLE,cv, "id=" +currentScores.getId(),null);
+        db.update(DONE_GIVEUP_TABLE, cv, "id=" + currentScores.getId(), null);
     }
-    public void addGiveupTask(){
+
+    public void addGiveupTask() {
         Score currentScores = getScores();
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_DONE_GIVEUP_DONE, currentScores.getDone());
-        cv.put(COLUMN_DONE_GIVEUP_GIVEUP, currentScores.getGiveup()+1);
-        db.update(DONE_GIVEUP_TABLE,cv, "id=" +currentScores.getId(),null);
+        cv.put(COLUMN_DONE_GIVEUP_GIVEUP, currentScores.getGiveup() + 1);
+        db.update(DONE_GIVEUP_TABLE, cv, "id=" + currentScores.getId(), null);
     }
-    public void resetScores(){
+
+    public void resetScores() {
         Score currentScores = getScores();
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_DONE_GIVEUP_DONE, 0);
         cv.put(COLUMN_DONE_GIVEUP_GIVEUP, 0);
-        db.update(DONE_GIVEUP_TABLE,cv, "id=" +currentScores.getId(),null);
+        db.update(DONE_GIVEUP_TABLE, cv, "id=" + currentScores.getId(), null);
     }
 }

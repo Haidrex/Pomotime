@@ -4,23 +4,30 @@ public class CurrentlyWorkingTodo {
     private int id;
     private String todo;
 
-    public CurrentlyWorkingTodo(){
+    public CurrentlyWorkingTodo() {
 
     }
 
-    public CurrentlyWorkingTodo(int id, String todo){
+    public CurrentlyWorkingTodo(int id, String todo) {
         this.id = id;
         this.todo = todo;
     }
 
-    public int getId(){return id;}
-    public String getTodo(){
+    public int getId() {
+        return id;
+    }
+
+    public String getTodo() {
         return todo;
     }
-    public void setTodo(String todo){
+
+    public void setTodo(String todo) {
         this.todo = todo;
     }
-    public void setId(int id){this.id = id; }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     @Override
     public String toString() {

@@ -13,15 +13,15 @@ import androidx.annotation.Nullable;
 import java.util.List;
 
 public class ListAdapter extends ArrayAdapter<ListItem> {
-    public ListAdapter(Context context, List<ListItem> objects){
+    public ListAdapter(Context context, List<ListItem> objects) {
         super(context, R.layout.listitemdesign, objects);
     }
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent){
+    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         View view = convertView;
-        if(view == null){
+        if (view == null) {
             LayoutInflater infalter =
                     (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = infalter.inflate(R.layout.listitemdesign, null);

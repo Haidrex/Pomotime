@@ -24,11 +24,12 @@ public class TodoDialog extends AppCompatDialogFragment {
     private EditText editTodo;
     private TodoDialogListener listener;
     private Spinner chooseCategory;
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        LayoutInflater inflater  = getActivity().getLayoutInflater();
+        LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.tododialog, null);
 
         builder.setView(view)
@@ -46,7 +47,8 @@ public class TodoDialog extends AppCompatDialogFragment {
 
                         ListItem todo;
 
-                        String title = editTodo.getText().toString();;
+                        String title = editTodo.getText().toString();
+                        ;
                         String category = chooseCategory.getSelectedItem().toString();
                         listener.applyText(title);
                         DBHelper dataBaseHelper = new DBHelper(getActivity());
@@ -74,11 +76,11 @@ public class TodoDialog extends AppCompatDialogFragment {
 
     }
 
-    public interface TodoDialogListener{
+    public interface TodoDialogListener {
         void applyText(String title);
     }
 
-    public void loadSpinnerData(){
+    public void loadSpinnerData() {
         DBHelper db = new DBHelper(getContext());
         List<String> categories = db.getAllCategories();
 

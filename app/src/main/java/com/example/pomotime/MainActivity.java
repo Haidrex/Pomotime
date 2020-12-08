@@ -1,9 +1,14 @@
 package com.example.pomotime;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.AlarmManager;
 import android.app.ListActivity;
 import android.app.NotificationChannel;
@@ -22,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -35,11 +41,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener, RequestOperator.RequestOperatorListener{
+public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener, RequestOperator.RequestOperatorListener {
     private long timeWork = 1500000;
     private long timeBreak = 300000;
     private String c_text = "";
@@ -97,11 +104,30 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         doneButton.setOnClickListener(finishTask);
         giveupButton.setOnClickListener(giveupOnTask);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.nav_share:
+                        DBHelper dbHelper = new DBHelper(getApplicationContext());
+                        Score score = dbHelper.getScores();
+                        int done = score.getDone();
+                        int gaveUp = score.getGiveup();
+                        String shareSentence = String.format("I did " + done + " tasks and gave up on " + gaveUp + " with Pomotime app");
+                        Intent share = new Intent(Intent.ACTION_SEND);
+                        share.setType("text/plain");
+                        share.putExtra(Intent.EXTRA_TEXT, shareSentence);
+
+                        startActivity(Intent.createChooser(share, "Share via"));
+                }
+                return true;
+            }
+        });
         View headerView = navigationView.getHeaderView(0);
         done = (TextView) headerView.findViewById(R.id.tasks_done);
         gaveup = (TextView) headerView.findViewById(R.id.task_gaveup);
         done.setOnLongClickListener(resetScores);
-
+        Menu menuView = navigationView.getMenu();
         initiateScores();
 
         createNotificationChannel();
@@ -152,10 +178,21 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         sendRequestButton.setOnClickListener(requestButtonClicked);
         itemsCount = (TextView) headerView.findViewById(R.id.items_count);
         indicator = (IndicatingView) headerView.findViewById(R.id.generated_graphic);
-        progressBar.setOnClickListener(saveProgress);
         adapters = new ArrayAdapter<>(this, R.layout.progresslistitem, progressList);
-
+        progressBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int progress = progressBar.getProgress();
+                ProgressItem item = new ProgressItem(progress, -1);
+                progressList.add(item);
+                adapters = new ProgressListAdapter(getApplicationContext(), progressList);
+                progressBarList.setAdapter(adapters);
+                adapters.notifyDataSetChanged();
+            }
+        });
         setTimer();
+
+
     }
 
     ;
@@ -223,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 timeLeftInMillisecondsWork = l;
                 updateWorkTimer();
                 i++;
-                progressBar.setProgress(i*100/(60000/1000));
+                progressBar.setProgress(i * 100 / (60000 / 1000));
             }
 
             @Override
@@ -252,11 +289,16 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
             timeLeftInMillisecondsBreak = 300000;
             breakCount = 0;
         }
+
         countDownTimerBreak = new CountDownTimer(timeLeftInMillisecondsBreak, 1000) {
+            int i = 0;
+
             @Override
             public void onTick(long millisUntilFinished) {
                 timeLeftInMillisecondsBreak = millisUntilFinished;
                 updateBreakTimer();
+                i++;
+                progressBar.setProgress(i * 100 / (60000 / 1000));
             }
 
             @Override
@@ -279,7 +321,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButton.setText("RESUME");
         countdownButtonStop.setText("DONE");
         WorkTimerRunning = false;
-        saveProgress();
 
     }
 
@@ -455,20 +496,20 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         }
     };
 
-    private void sendRequest(){
+    private void sendRequest() {
         RequestOperator ro = new RequestOperator();
         ro.setListener(this);
         ro.start();
     }
 
 
-    public void updatePublication(){
-        runOnUiThread(new Runnable(){
+    public void updatePublication() {
+        runOnUiThread(new Runnable() {
             @Override
-            public void run(){
-                if(jsoncount != -1){
+            public void run() {
+                if (jsoncount != -1) {
                     itemsCount.setText("Item count: " + jsoncount);
-                }else{
+                } else {
                     done.setText("");
                     gaveup.setText("");
                     itemsCount.setText("");
@@ -491,7 +532,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         setIndicatorStatus(IndicatingView.FAILED);
     }
 
-//    public void updateCount(){
+    //    public void updateCount(){
 //        runOnUiThread(new Runnable(){
 //            @Override
 //            public void run(){
@@ -515,7 +556,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
 //        this.jsoncount = 0;
 //        updateCount();
 //    }
-    public void setIndicatorStatus(final int status){
+    public void setIndicatorStatus(final int status) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -525,8 +566,8 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         });
     }
 
-    public void createNotificationChannel(){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+    public void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "LemubitReminderChannel";
             String description = "Channel for Lemubit Reminder";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
@@ -538,18 +579,16 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         }
     }
 
-    public void workingOnSetup(){
+    public void workingOnSetup() {
         SharedPreferences preferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         String workingOn = preferences.getString(WORKING, null);
-        Toast toast = Toast.makeText(getApplicationContext(), "Finished", Toast.LENGTH_SHORT);
-        toast.show();
-        if(workingOn != null){
+
+        if (workingOn != null) {
             workingOnWhat.setText("Working on: " + workingOn);
             giveupButton.setVisibility(View.VISIBLE);
             doneButton.setVisibility(View.VISIBLE);
 
-        }
-        else{
+        } else {
             workingOnWhat.setText("");
             giveupButton.setVisibility(View.INVISIBLE);
             doneButton.setVisibility(View.INVISIBLE);
@@ -591,7 +630,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         }
     };
 
-    public void initiateScores(){
+    public void initiateScores() {
         DBHelper dataBaseHelper = new DBHelper(getApplicationContext());
         dataBaseHelper.initiateScores();
         Score score = dataBaseHelper.getScores();
@@ -618,13 +657,5 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         }
     };
 
-    public void saveProgress(){
-        int progress = progressBar.getProgress();
-        ProgressItem item = new ProgressItem(progress,-1);
-        progressList.add(item);
-        adapters = new ProgressListAdapter(this, progressList);
-        progressBarList.setAdapter(adapters);
-        adapters.notifyDataSetChanged();
 
-    }
 }

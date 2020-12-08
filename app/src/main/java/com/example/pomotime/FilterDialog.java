@@ -26,11 +26,12 @@ import java.util.List;
 public class FilterDialog extends AppCompatDialogFragment {
     private FilterDialog.FilterDialogListener listener;
     private Spinner chooseCategory;
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        LayoutInflater inflater  = getActivity().getLayoutInflater();
+        LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.filter_dialog, null);
 
         builder.setView(view)
@@ -69,11 +70,11 @@ public class FilterDialog extends AppCompatDialogFragment {
 
     }
 
-    public interface FilterDialogListener{
+    public interface FilterDialogListener {
         void applyFilter(String category);
     }
 
-    public void loadSpinnerData(){
+    public void loadSpinnerData() {
         DBHelper db = new DBHelper(getContext());
         List<String> categories = db.getAllCategories();
 

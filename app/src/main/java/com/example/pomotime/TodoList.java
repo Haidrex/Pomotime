@@ -30,7 +30,7 @@ import androidx.appcompat.widget.Toolbar;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TodoList extends AppCompatActivity implements FilterDialog.FilterDialogListener{
+public class TodoList extends AppCompatActivity implements FilterDialog.FilterDialogListener {
     private Context context = this;
     private ListView myTodoList;
     private Button filterButton;
@@ -39,7 +39,7 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
     public static final String WORKING = "working";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_todolist);
         Toolbar myToolBar = (Toolbar) findViewById(R.id.my_toolbar);
@@ -51,10 +51,9 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
         registerForContextMenu(myTodoList);
 
 
-
         myTodoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> a, View v, final int position, long id) {
-                AlertDialog.Builder builder =new AlertDialog.Builder(TodoList.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(TodoList.this);
                 builder.setTitle("Delete?");
                 builder.setMessage("Are you sure you want to delete item");
                 final AdapterView<?> parent = a;
@@ -65,13 +64,14 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
                         ListItem clickedItem = (ListItem) parent.getItemAtPosition(positionToRemove);
                         DBHelper dbHelper = new DBHelper(TodoList.this);
                         dbHelper.deleteTodo(clickedItem);
-                        if(dbHelper.isCurrentlyWorking() == false) {
+                        if (dbHelper.isCurrentlyWorking() == false) {
                             if (clickedItem.getTitle().equals(dbHelper.getCurrentlyWorking())) {
                                 dbHelper.deleteCurrentlyWorking();
                             }
                         }
                         loadData();
-                    }});
+                    }
+                });
                 builder.show();
             }
         });
@@ -102,12 +102,12 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.delete:
                 ListItem clickedItem = (ListItem) myTodoList.getItemAtPosition(info.position);
                 DBHelper dbHelper = new DBHelper(TodoList.this);
                 dbHelper.deleteTodo(clickedItem);
-                if(dbHelper.isCurrentlyWorking() == false) {
+                if (dbHelper.isCurrentlyWorking() == false) {
                     if (clickedItem.getTitle().equals(dbHelper.getCurrentlyWorking())) {
                         dbHelper.deleteCurrentlyWorking();
                     }
@@ -127,14 +127,15 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.toolbar_menu,menu);
+        inflater.inflate(R.menu.toolbar_menu, menu);
         return true;
     }
+
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
-        switch (item.getItemId()){
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case R.id.action_settings:
                 Intent intent = new Intent(context, Settings.class);
                 intent.putExtra("flag", true);
@@ -146,16 +147,16 @@ public class TodoList extends AppCompatActivity implements FilterDialog.FilterDi
         }
     }
 
-    public void loadData(){
+    public void loadData() {
         DBHelper dbHelper = new DBHelper(TodoList.this);
         List<ListItem> allItems = dbHelper.getAllTodos();
         ListAdapter adapter = new ListAdapter(this, allItems);
         myTodoList.setAdapter(adapter);
     }
 
-    public void openDialog(){
+    public void openDialog() {
         FilterDialog filterDialog = new FilterDialog();
-        filterDialog.show(getSupportFragmentManager(),"example dialog");
+        filterDialog.show(getSupportFragmentManager(), "example dialog");
     }
 
     @Override

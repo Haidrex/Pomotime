@@ -5,11 +5,12 @@ public class ModelPost {
     int done;
     int gaveup;
     int totalCount;
-    public ModelPost(){
+
+    public ModelPost() {
 
     }
 
-    public ModelPost(int id, int done, int gaveup, int totalCount){
+    public ModelPost(int id, int done, int gaveup, int totalCount) {
         this.id = id;
         this.done = done;
         this.gaveup = gaveup;
@@ -28,7 +29,7 @@ public class ModelPost {
         return gaveup;
     }
 
-    public int getTotalCount(){
+    public int getTotalCount() {
         return totalCount;
     }
 
@@ -44,7 +45,7 @@ public class ModelPost {
         this.gaveup = gaveup;
     }
 
-    public void setTotalCount(int totalCount){
+    public void setTotalCount(int totalCount) {
         this.totalCount = totalCount;
     }
 }

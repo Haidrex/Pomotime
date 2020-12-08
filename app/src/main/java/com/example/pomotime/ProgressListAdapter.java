@@ -23,18 +23,18 @@ public class ProgressListAdapter extends ArrayAdapter<ProgressItem> {
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent){
+    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         View view = convertView;
-        if(view == null){
+        if (view == null) {
             LayoutInflater infalter =
                     (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = infalter.inflate(R.layout.progresslistitem, null);
         }
 
-        ProgressBar title = (ProgressBar) view.findViewById(R.id.progressbar);
+        ProgressBar bar = (ProgressBar) view.findViewById(R.id.progressbar);
 
         ProgressItem item = getItem(position);
-        title.setProgress(item.getProgress());
+        bar.setProgress(item.getProgress());
         return view;
     }
 

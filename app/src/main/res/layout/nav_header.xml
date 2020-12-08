@@ -11,55 +11,58 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-    <Button
-        android:id="@+id/send_request"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/button"
-        android:padding="15dp"
-        android:text="Send Request"
-        android:textColor="#fff" />
-    <com.example.pomotime.IndicatingView
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:id="@+id/generated_graphic"
-        android:layout_marginLeft="10dp"
-        android:background="@color/colorPrimary"
-        />
+
+        <Button
+            android:id="@+id/send_request"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button"
+            android:padding="15dp"
+            android:text="Send Request"
+            android:textColor="#fff" />
+
+        <com.example.pomotime.IndicatingView
+            android:id="@+id/generated_graphic"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:background="@color/colorPrimary" />
 
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        >
+        android:gravity="end">
+
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Done:"
             android:id="@+id/tasks_done"
-            />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="end">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Gave Up:"
-        android:id="@+id/task_gaveup"
-        />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="end">
-        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Item Count:"
+            android:text="Done:" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/task_gaveup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gave Up:" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end">
+
+        <TextView
             android:id="@+id/items_count"
-            />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Item Count:" />
     </LinearLayout>
 </LinearLayout>
