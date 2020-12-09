@@ -28,9 +28,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_DONE_GIVEUP_ID = "ID";
     public static final String COLUMN_DONE_GIVEUP_DONE = "DONE";
     public static final String COLUMN_DONE_GIVEUP_GIVEUP = "GIVEUP";
+    public static final String RUNS_TABLE = "RUNS";
+    public static final String COLUMN_RUNS_ID = "ID";
+    public static final String COLUMN_RUNS_STEPS = "STEPS";
+    public static final String COLUMN_RUNS_MAX = "MAX_SPEED";
+    public static final String COLUMN_RUNS_TIME = "TIME";
 
     public DBHelper(@Nullable Context context) {
-        super(context, "pomo.db", null, 6);
+        super(context, "pomo.db", null, 7);
     }
 
     @Override
@@ -40,16 +45,18 @@ public class DBHelper extends SQLiteOpenHelper {
         String createTableStatement3 = "CREATE TABLE IF NOT EXISTS " + CURRENTLY_WORKING + " (" + CURRENTLY_WORKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + CURRENTLY_WORKING_TODO + " TEXT);";
         String createTableStatement4 = "CREATE TABLE IF NOT EXISTS " + CURRENTLY_WORKING + " (" + CURRENTLY_WORKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + CURRENTLY_WORKING_TODO + " TEXT);";
         String createTableStatement5 = "CREATE TABLE IF NOT EXISTS " + DONE_GIVEUP_TABLE + " (" + COLUMN_DONE_GIVEUP_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_DONE_GIVEUP_DONE + " INTEGER, " + COLUMN_DONE_GIVEUP_GIVEUP + " INTEGER);";
+        String createTableStatement6 = "CREATE TABLE IF NOT EXISTS " + RUNS_TABLE + " (" + COLUMN_RUNS_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_RUNS_STEPS + " INTEGER, " + COLUMN_RUNS_MAX + " DOUBLE,  " + COLUMN_RUNS_TIME + " INTEGER);";
         db.execSQL(createTableStatement);
         db.execSQL(createTableStatement2);
         db.execSQL(createTableStatement3);
         db.execSQL(createTableStatement4);
         db.execSQL(createTableStatement5);
+        db.execSQL(createTableStatement6);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        String createTableStatement = "CREATE TABLE IF NOT EXISTS " + CURRENTLY_WORKING + " (" + CURRENTLY_WORKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + CURRENTLY_WORKING_TODO + " TEXT);";
+        String createTableStatement = "CREATE TABLE IF NOT EXISTS " + RUNS_TABLE + " (" + COLUMN_RUNS_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_RUNS_STEPS + " INTEGER, " + COLUMN_RUNS_MAX + " DOUBLE, " + COLUMN_RUNS_TIME + " INTEGER);";
         db.execSQL(createTableStatement);
     }
 
@@ -102,6 +109,23 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public boolean insertRun(Runs run){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COLUMN_RUNS_STEPS, run.getSteps());
+        cv.put(COLUMN_RUNS_TIME, run.getTime());
+        cv.put(COLUMN_RUNS_MAX, run.getMaxSpeed());
+
+        long insert = db.insert(RUNS_TABLE, null, cv);
+
+        if(insert == -1){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
     public List<ListItem> getAllTodos() {
 
         List<ListItem> listitems = new ArrayList<ListItem>();
@@ -127,6 +151,31 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return listitems;
+    }
+
+    public List<Runs> getAllRuns(){
+        List<Runs> runsList = new ArrayList<Runs>();
+
+        String queryString = "SELECT * FROM " + RUNS_TABLE;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(queryString, null);
+
+        if(cursor.moveToFirst()){
+            do{
+                int runId = cursor.getInt(0);
+                int steps = cursor.getInt(1);
+                double maxSpeed = cursor.getDouble(2);
+                int time = cursor.getInt(3);
+            }while(cursor.moveToNext());
+        }else{
+
+        }
+
+        cursor.close();
+        db.close();
+        return runsList;
     }
 
     public boolean deleteTodo(ListItem todoItem) {

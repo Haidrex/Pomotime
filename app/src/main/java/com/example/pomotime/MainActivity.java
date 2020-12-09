@@ -57,8 +57,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.maps.android.SphericalUtil;
 
 import java.lang.reflect.Array;
+import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
@@ -123,10 +125,17 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     static int p = 0;
     static boolean status;
     static long startTime, endTime;
-    private TextView stepsToKm;
+    private TextView timeRan;
     private TextView maxSpeed;
-    private float currentMaxSpeed = 0;
+    private double currentMaxSpeed = 0;
     private boolean isFirstStep = true;
+    private ArrayList<Location> locations = new ArrayList<Location>();
+    private int secondsRan = 0;
+    private Button runsListButton;
+    private Button saveRunButton;
+    private int totalSteps;
+    private double maxSpeedItem;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -137,9 +146,11 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
 
         preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
+        runsListButton = (Button) findViewById(R.id.runsList);
+        saveRunButton = (Button) findViewById(R.id.saveRun);
         stepView = (TextView) findViewById(R.id.stepCount);
         speedView = (TextView) findViewById(R.id.speed);
-        stepsToKm = (TextView) findViewById(R.id.stepsToKm);
+        timeRan = (TextView) findViewById(R.id.timeRan);
         maxSpeed = (TextView) findViewById(R.id.maxSpeed);
         progressBarList = (ListView) findViewById(R.id.progressList);
         drawer = findViewById(R.id.drawer_layout);
@@ -214,7 +225,12 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 openDialog();
             }
         });
-
+        saveRunButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveRun();
+            }
+        });
         secondActivityButton.setOnClickListener(starTodoList);
         secondActivityButton.setOnLongClickListener(startTodoListLong);
 
@@ -324,6 +340,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
                 timeLeftInMillisecondsWork = l;
                 updateWorkTimer();
                 i++;
+                secondsRan++;
                 progressBar.setProgress(i * 100 / (60000 / 1000));
             }
 
@@ -408,6 +425,10 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         if (isRunningMode) {
             stopSpeed();
             stopSteps();
+            isFirstStep = true;
+            timeRan.setText(getTimeRan(secondsRan));
+            saveRunButton.setEnabled(true);
+            secondsRan = 0;
         }
     }
 
@@ -714,26 +735,31 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
             secondActivityButton.setVisibility(View.INVISIBLE);
             speedView.setVisibility(View.VISIBLE);
             stepView.setVisibility(View.VISIBLE);
-            stepsToKm.setVisibility(View.VISIBLE);
+            timeRan.setVisibility(View.VISIBLE);
             maxSpeed.setVisibility(View.VISIBLE);
+            runsListButton.setVisibility(View.VISIBLE);
+            saveRunButton.setVisibility(View.VISIBLE);
         } else {
             addTodo.setVisibility(View.VISIBLE);
             secondActivityButton.setVisibility(View.VISIBLE);
             speedView.setVisibility(View.INVISIBLE);
             stepView.setVisibility(View.INVISIBLE);
-            stepsToKm.setVisibility(View.INVISIBLE);
+            timeRan.setVisibility(View.INVISIBLE);
             maxSpeed.setVisibility(View.INVISIBLE);
+            runsListButton.setVisibility(View.INVISIBLE);
+            saveRunButton.setVisibility(View.INVISIBLE);
         }
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(isFirstStep){
-            updateStepsPrefs((int)event.values[0]);
+        if (isFirstStep) {
+            updateStepsPrefs((int) event.values[0]);
             isFirstStep = false;
         }
         if (event.sensor == countSensor) {
-            stepView.setText("Steps: " + String.valueOf((int)event.values[0] - getStepsPrefs()));
+            stepView.setText("Steps: " + String.valueOf((int) event.values[0] - getStepsPrefs()));
+            totalSteps = (int) event.values[0];
         }
     }
 
@@ -784,7 +810,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     @Override
     public void onLocationChanged(@NonNull Location location) {
         if (location != null) {
-            //CLocation myLocation = new CLocation(location, this.useMetricUnits());
+            locations.add(location);
             this.updateSpeed(location);
         }
     }
@@ -823,7 +849,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
             String strCurrentMaxSpeed = fmtr.toString();
             strCurrentMaxSpeed = strCurrentMaxSpeed.replace(" ", "0");
             maxSpeed.setText("Max: " + strCurrentSpeed + " km/h");
-            currentMaxSpeed = nCurrentSpeed;
+            currentMaxSpeed = (double) nCurrentSpeed;
         }
 
     }
@@ -853,7 +879,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         Toast.makeText(this, "Run stopped", Toast.LENGTH_SHORT).show();
     }
 
-    public void startSteps(){
+    public void startSteps() {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         countSensor = (Sensor) sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (countSensor != null) {
@@ -864,22 +890,38 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
 
     }
 
-    public void stopSteps(){
+    public void stopSteps() {
         if (countSensor != null) {
             sensorManager.unregisterListener(this, countSensor);
         }
     }
 
-    public void updateStepsPrefs(int steps){
+    public void updateStepsPrefs(int steps) {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt(STEPS, steps);
         editor.apply();
     }
 
-    public int getStepsPrefs(){
+    public int getStepsPrefs() {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         int steps = sharedPreferences.getInt(STEPS, 0);
         return steps;
+    }
+
+    public String getTimeRan(int time) {
+        int minutes = time / 60;
+        int seconds = time % 60;
+
+        String timeRan = "Time: " + minutes + ":" + seconds;
+        return timeRan;
+    }
+
+    public void saveRun() {
+        Runs newRun = new Runs(-1, totalSteps - getStepsPrefs(), currentMaxSpeed, secondsRan);
+        DBHelper dbHelper = new DBHelper(this);
+        dbHelper.insertRun(newRun);
+        Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+        saveRunButton.setEnabled(false);
     }
 }

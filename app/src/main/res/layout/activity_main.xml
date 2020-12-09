@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textSize="20sp"
-                android:id="@+id/stepsToKm"
+                android:id="@+id/timeRan"
                 android:layout_weight="0.5"
                 android:ellipsize="end"
                 android:visibility="invisible"/>
@@ -223,7 +223,36 @@
                 android:layout_weight="0.5"
                 android:text="Add To Do" />
         </LinearLayout>
+        <LinearLayout
+            android:id="@+id/runButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="500sp"
+            android:orientation="horizontal">
 
+            <Button
+                android:id="@+id/runsList"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="0.5"
+                android:ellipsize="end"
+                android:text="Runs List"
+                android:visibility="invisible"/>
+
+            <Button
+                android:id="@+id/saveRun"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_weight="0.5"
+                android:text="Save Run"
+                android:visibility="invisible"
+                android:enabled="false"/>
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
