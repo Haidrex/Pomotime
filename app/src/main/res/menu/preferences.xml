@@ -5,11 +5,11 @@
         android:key="timer"
         android:title="Settings">
         <EditTextPreference
-            android:dialogTitle="Work Duration"
+            android:dialogTitle="Work/Run Duration"
             android:inputType="number"
             android:key="work_duration"
             android:numeric="integer"
-            android:summary="Enter the Work Duration"
+            android:summary="Enter the Work/Run Duration"
             android:title="Work Duration" />
 
 
@@ -20,6 +20,12 @@
             android:numeric="integer"
             android:summary="Enter the Break Duration"
             android:title="Break Duration" />
+
+        <CheckBoxPreference
+            android:summary="Enable running mode"
+            android:title="Running mode"
+            android:key="running_mode"
+            />
     </PreferenceCategory>
 
 </PreferenceScreen>

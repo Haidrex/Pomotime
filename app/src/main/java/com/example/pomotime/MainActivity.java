@@ -1,10 +1,12 @@
 package com.example.pomotime;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
@@ -14,13 +16,27 @@ import android.app.ListActivity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.view.Menu;
@@ -37,16 +53,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener, RequestOperator.RequestOperatorListener {
+public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDialogListener, SharedPreferences.OnSharedPreferenceChangeListener, RequestOperator.RequestOperatorListener, SensorEventListener, LocationListener {
     private long timeWork = 1500000;
     private long timeBreak = 300000;
     private String c_text = "";
@@ -90,12 +109,38 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     private ArrayList<ProgressItem> progressList = new ArrayList<>();
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String WORKING = "working";
+    public static final String STEPS = "steps";
+    private boolean isRunningMode;
+    private TextView stepView;
+    private boolean running = false;
+    private SensorManager sensorManager;
+    private Sensor countSensor;
+    static TextView speedView;
+    private Sensor speedSensor;
+    LocationService locationService;
+    LocationManager locationManager;
+    static ProgressDialog locate;
+    static int p = 0;
+    static boolean status;
+    static long startTime, endTime;
+    private TextView stepsToKm;
+    private TextView maxSpeed;
+    private float currentMaxSpeed = 0;
+    private boolean isFirstStep = true;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setupPermission();
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        stepView = (TextView) findViewById(R.id.stepCount);
+        speedView = (TextView) findViewById(R.id.speed);
+        stepsToKm = (TextView) findViewById(R.id.stepsToKm);
+        maxSpeed = (TextView) findViewById(R.id.maxSpeed);
         progressBarList = (ListView) findViewById(R.id.progressList);
         drawer = findViewById(R.id.drawer_layout);
         workingOnWhat = findViewById(R.id.workingOnWhat);
@@ -145,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         addTodo = findViewById(R.id.addListItem);
         countdownButtonStop.setEnabled(false);
         progressBar = findViewById(R.id.progressbar);
+        setUpMode();
         int i = 0;
         progressBar.setProgress(i);
 
@@ -171,7 +217,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
 
         secondActivityButton.setOnClickListener(starTodoList);
         secondActivityButton.setOnLongClickListener(startTodoListLong);
-        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 
         Button sendRequestButton = (Button) headerView.findViewById(R.id.send_request);
@@ -193,6 +238,8 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         setTimer();
 
 
+        this.updateSpeed(null);
+
     }
 
     ;
@@ -201,7 +248,19 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
     protected void onResume() {
         super.onResume();
         setTimer();
+        setUpMode();
+
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (countSensor != null) {
+            sensorManager.unregisterListener(this, countSensor);
+        }
+
+    }
+
 
     public void openDialog() {
         TodoDialog tododialog = new TodoDialog();
@@ -252,6 +311,11 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
      *
      */
     public void startWorkTimer() {
+        isRunningMode = preferences.getBoolean("running_mode", false);
+        if (isRunningMode) {
+            startSpeed();
+            startSteps();
+        }
         countDownTimer = new CountDownTimer(timeLeftInMillisecondsWork, 1000) {
             int i = 0;
 
@@ -281,6 +345,8 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setEnabled(true);
         WorkTimerRunning = true;
         WorkOrBreak = true;
+
+
     }
 
     //function that starts the break timer
@@ -322,6 +388,11 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setText("DONE");
         WorkTimerRunning = false;
 
+        isRunningMode = preferences.getBoolean("running_mode", false);
+        if (isRunningMode) {
+            stopSpeed();
+            stopSteps();
+        }
     }
 
     //stops the work timer, makes it go back to 25:00 minutes
@@ -334,7 +405,10 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         countdownButtonStop.setEnabled(false);
         WorkTimerRunning = false;
         progressBar.setProgress(0);
-
+        if (isRunningMode) {
+            stopSpeed();
+            stopSteps();
+        }
     }
 
     //finishes work timer and starts the break timer
@@ -532,30 +606,6 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         setIndicatorStatus(IndicatingView.FAILED);
     }
 
-    //    public void updateCount(){
-//        runOnUiThread(new Runnable(){
-//            @Override
-//            public void run(){
-//                if(jsoncount != 0){
-//                    itemsCount.setText("Item Count: " + jsoncount);
-//                }else{
-//                    itemsCount.setText("I failed :(");
-//                }
-//            }
-//        });
-//    }
-//
-//    @Override
-//    public void successCount(int count) {
-//        this.jsoncount = count;
-//        updateCount();
-//    }
-//
-//    @Override
-//    public void failedCount(int responseCode) {
-//        this.jsoncount = 0;
-//        updateCount();
-//    }
     public void setIndicatorStatus(final int status) {
         runOnUiThread(new Runnable() {
             @Override
@@ -657,5 +707,179 @@ public class MainActivity extends AppCompatActivity implements TodoDialog.TodoDi
         }
     };
 
+    public void setUpMode() {
+        isRunningMode = preferences.getBoolean("running_mode", false);
+        if (isRunningMode) {
+            addTodo.setVisibility(View.INVISIBLE);
+            secondActivityButton.setVisibility(View.INVISIBLE);
+            speedView.setVisibility(View.VISIBLE);
+            stepView.setVisibility(View.VISIBLE);
+            stepsToKm.setVisibility(View.VISIBLE);
+            maxSpeed.setVisibility(View.VISIBLE);
+        } else {
+            addTodo.setVisibility(View.VISIBLE);
+            secondActivityButton.setVisibility(View.VISIBLE);
+            speedView.setVisibility(View.INVISIBLE);
+            stepView.setVisibility(View.INVISIBLE);
+            stepsToKm.setVisibility(View.INVISIBLE);
+            maxSpeed.setVisibility(View.INVISIBLE);
+        }
+    }
 
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(isFirstStep){
+            updateStepsPrefs((int)event.values[0]);
+            isFirstStep = false;
+        }
+        if (event.sensor == countSensor) {
+            stepView.setText("Steps: " + String.valueOf((int)event.values[0] - getStepsPrefs()));
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void setupPermission() {
+        if (checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, 1);
+        }
+    }
+
+    public void checkGps() {
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            showGpsAlert();
+        }
+    }
+
+    public void showGpsAlert() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Enable GPS to use running mode")
+                .setCancelable(false)
+                .setPositiveButton("Enable GPS",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                startActivity(intent);
+                            }
+                        });
+
+        alertDialogBuilder.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        if (location != null) {
+            //CLocation myLocation = new CLocation(location, this.useMetricUnits());
+            this.updateSpeed(location);
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(@NonNull String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(@NonNull String provider) {
+
+    }
+
+    private void updateSpeed(Location location) {
+        float nCurrentSpeed = 0;
+        if (location != null) {
+            nCurrentSpeed = location.getSpeed();
+        }
+
+        Formatter fmt = new Formatter(new StringBuilder());
+        fmt.format(Locale.US, "%5.1f", nCurrentSpeed);
+        String strCurrentSpeed = fmt.toString();
+        strCurrentSpeed = strCurrentSpeed.replace(" ", "0");
+
+        speedView.setText("Speed " + strCurrentSpeed + " km/h");
+
+        if (currentMaxSpeed < nCurrentSpeed) {
+            Formatter fmtr = new Formatter(new StringBuilder());
+            fmtr.format(Locale.US, "%5.1f", nCurrentSpeed);
+            String strCurrentMaxSpeed = fmtr.toString();
+            strCurrentMaxSpeed = strCurrentMaxSpeed.replace(" ", "0");
+            maxSpeed.setText("Max: " + strCurrentSpeed + " km/h");
+            currentMaxSpeed = nCurrentSpeed;
+        }
+
+    }
+
+    public void startSpeed() {
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager != null) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+
+        }
+        Toast.makeText(this, "Run started", Toast.LENGTH_SHORT).show();
+    }
+
+    public void stopSpeed() {
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.removeUpdates(this);
+        Toast.makeText(this, "Run stopped", Toast.LENGTH_SHORT).show();
+    }
+
+    public void startSteps(){
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        countSensor = (Sensor) sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        if (countSensor != null) {
+            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        } else {
+            stepView.setText("NO SENSOR");
+        }
+
+    }
+
+    public void stopSteps(){
+        if (countSensor != null) {
+            sensorManager.unregisterListener(this, countSensor);
+        }
+    }
+
+    public void updateStepsPrefs(int steps){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(STEPS, steps);
+        editor.apply();
+    }
+
+    public int getStepsPrefs(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        int steps = sharedPreferences.getInt(STEPS, 0);
+        return steps;
+    }
 }
